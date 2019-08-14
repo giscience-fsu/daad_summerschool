@@ -12,4 +12,4 @@ Learning objectives:
 
 To easily reproduce the examples shown during the tutorial, use the
 [**RQGIS3** docker
-image](https://github.com/jannes-m/docker-rqgis/tree/master/rqgis3_ltr)
+image](https://github.com/jannes-m/docker-rqgis/tree/master/rqgis3_ltr).
