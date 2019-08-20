@@ -2,3 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
+*html
+*.Rmd
+*.css
+img
+*.Rproj
+misc
+!README.Rmd
+*.pptx
