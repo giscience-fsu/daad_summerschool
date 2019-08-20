@@ -10,13 +10,13 @@ repo using the R package
 [holepunch](https://karthik.github.io/holepunch/).
 
 By clicking “Launch Binder”, a RStudio instance will launch with all
-required R packages pre-installed.
+required R packages pre-installed. It will terminate if there was no
+user interaction for 10 minutes.
 
-The source of this session lives in
+The materials of this session live in
 [giscience-fsu/daad\_summerschool\_hyperspectral](https://github.com/giscience-fsu/daad_summerschool_hyperspectral).
 
-An alternative way to run all examples of this session is to checkout a
-fork of the source repo locally:
+A quick way to run all examples locally is
 
 ``` r
 usethis::create_from_github("giscience-fsu/daad_summerschool_hyperspectral")
