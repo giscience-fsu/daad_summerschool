@@ -1,0 +1,161 @@
+---
+title: "Part 4: Masking and filtering of spectra"
+author: "Patrick Schratz"
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
+output: 
+  html_document:
+    theme: paper
+    highlight: haddock 
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+## knitr options
+# knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(comment = "")
+
+library("raster")
+library("hsdar")
+library("here")
+library("rasterVis", )
+library("mapview")
+library("magrittr")
+library("stars")
+
+# create objects from previous document
+file <- here("data") %>%
+  list.files(pattern = ".tif$", full.names = TRUE)
+raster <- raster::brick(file[1])
+wavelength <- c(
+  404.08, 408.5, 412.92, 417.36, 
+  421.81, 426.27, 430.73, 435.20,
+  439.69, 444.18, 448.68, 453.18, 457.69, 462.22, 466.75, 471.29,
+  475.83, 480.39, 484.95, 489.52, 494.09, 498.68, 503.26, 507.86,
+  512.47, 517.08, 521.70, 526.32, 530.95, 535.58, 540.23, 544.88,
+  549.54, 554.20, 558.86, 563.54, 568.22, 572.90, 577.60, 582.29,
+  586.99, 591.70, 596.41, 601.13, 605.85, 610.58, 615.31, 620.05,
+  624.79, 629.54, 634.29, 639.04, 643.80, 648.56, 653.33, 658.10,
+  662.88, 667.66, 672.44, 677.23, 682.02, 686.81, 691.60, 696.40,
+  701.21, 706.01, 710.82, 715.64, 720.45, 725.27, 730.09, 734.91,
+  739.73, 744.56, 749.39, 754.22, 759.05, 763.89, 768.72, 773.56,
+  778.40, 783.24, 788.08, 792.93, 797.77, 802.62, 807.47, 812.32,
+  817.17, 822.02, 826.87, 831.72, 836.57, 841.42, 846.28, 851.13,
+  855.98, 860.83, 865.69, 870.54, 875.39, 880.24, 885.09, 889.94,
+  894.79, 899.64, 904.49, 909.34, 914.18, 919.03, 923.87, 928.71,
+  933.55, 938.39, 943.23, 948.07, 952.90, 957.73, 962.56, 967.39,
+  972.22, 977.04, 981.87, 986.68, 991.50, 996.31
+)
+speclib <- hsdar::speclib(raster, wavelength)
+mask(speclib) <- c(404, 418)
+hyperspecs <- hsdar::HyperSpecRaster(raster, wavelength)
+```
+
+**Note**
+
+This part uses the built-in dataset `spectral_data` from the `hsdar` package. 
+The reason is that this dataset has more "errors" showing the effect of filtering and masking compared to the hyperspectral image from the previous parts.
+
+# Accounting for errors in spectra
+
+Before applying a continuum removal correction on a spectrum, it is important to check if the spectra signature contains errors and to account them. 
+
+```{r 04-masking-and-filtering-1 }
+data("spectral_data")
+spectral_data
+plot(spectral_data)
+```
+
+Some artifacts appear between 1050 nm and 1400 nm.  
+To account for these, we can mask out the problematic wavelength ranges.
+
+```{r 04-masking-and-filtering-2 }
+spectral_data_masked = spectral_data
+mask(spectral_data_masked) <- c(1040, 1060, 1300, 1450)
+spectral_data_masked
+```
+
+Note that in the summary if the spectra this change has been logged (in (2)) and the number of bands was reduced from 1401 to 1233.
+
+Let's plot both the full spectrum and the masked one side by side:
+
+```{r 04-masking-and-filtering-3 }
+par(mfrow = c(1, 2))
+
+plot(spectral_data, FUN = 1, main = "Original")
+
+plot(spectral_data_masked, FUN = 1, main = "Masked")
+```
+
+# Interpolation of missing/wrong values
+
+After masking, the masked areas can be filled again using `hsdar::interpolate.mask()`. 
+
+```{r 04-masking-and-filtering-4 }
+spectral_data_masked_interpolated <- interpolate.mask(spectral_data_masked)
+
+plot(spectral_data_masked_interpolated, FUN = 1)
+```
+
+# Filtering (smoothing) of spectra
+
+Taking a closer look at the spectrum, there is a possible need to smooth it in the range between 1000 nm and 1150 nm.
+
+```{r 04-masking-and-filtering-5 }
+plot(spectral_data, FUN = 1, xlim = c(1000, 1150))
+```
+
+The `hsdar` package comes with several "filter" methods to smooth spectra: 
+
+* 'Savitzky-Golay'
+* 'Spline'
+* 'Locally Weighted Scatterplot Smoothing (Lowess)'
+* 'Mean Filter' 
+
+The function `hsdar::smoothSpeclib()` works on objects of class `Speclib`.  
+Arguments vary depending on the chosen method. See `?smoothSpeclib()` for more information.  
+
+```{r 04-masking-and-filtering-6 }
+sgolay <- smoothSpeclib(spectral_data, method = "sgolay", n = 25)
+
+lowess <- smoothSpeclib(spectral_data, method = "lowess", f = .01)
+
+meanflt <- smoothSpeclib(spectral_data, method = "mean", p = 5)
+
+spline <- smoothSpeclib(spectral_data, method = "spline", 
+                        n = round(nbands(spectral_data) / 10, 0))
+```
+
+```{r 04-masking-and-filtering-7 }
+par(mfrow = c(2, 2))
+
+plot(sgolay, FUN = 1, xlim = c(1000, 1150), col = "red", main = "Savitzky-Golay-Filter")
+plot(spectral_data, FUN = 1, new = FALSE) #raw spectrum
+
+plot(lowess, FUN = 1, xlim = c(1000, 1150), col = "red", main = "Lowess-Filter")
+plot(spectral_data, FUN = 1, new = FALSE) #raw spectrum
+
+plot(meanflt, FUN = 1, xlim = c(1000, 1150), col = "red", main = "Mean-filter")
+plot(spectral_data, FUN = 1, new = FALSE) #raw spectrum
+
+plot(spline, FUN = 1, xlim = c(1000, 1150), col = "red", main = "Spline-Filter")
+plot(spectral_data, FUN = 1, new = FALSE) #raw spectrum
+```
+
+You see the different behavior of the smoothing methods. 
+Click on the Figure to zoom in ;-)
+
+It is important to know the implications of applying the respective filters on a spectrum. 
+The idea behind the filtering of spectra is to avoid small local maxima which are not associated with reflection maxima.  
+When filtering spectra there is a risk of loosing important information because small local maxima which are not associated with reflection characteristics might get smoothed out.
+
+```{r 04-masking-and-filtering-8 }
+par(mfrow = c(1, 1))
+plot(spline, FUN = 1)
+```
+
+(The example shown here is just for demonstration purposes and the applied filter range here does not claim to make sense in practice.) 

@@ -1,4 +1,6 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- badges: start -->
 
-## Learning objectives
+[![Launch Rstudio
+Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/giscience-fsu/daad_summerschool/master?urlpath=rstudio)
+<!-- badges: end -->

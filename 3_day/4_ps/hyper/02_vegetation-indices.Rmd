@@ -1,0 +1,152 @@
+---
+title: "Part 2: Vegetation Indices"
+author: "Patrick Schratz"
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
+output: 
+  html_document:
+    theme: paper
+    highlight: haddock 
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+## knitr options
+# knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(comment = "")
+
+library("raster")
+library("hsdar")
+library("here")
+library("rasterVis", )
+library("mapview")
+library("magrittr")
+library("stars")
+
+# create objects from previous document
+file <- here("data") %>%
+  list.files(pattern = ".tif$", full.names = TRUE)
+raster <- raster::brick(file[1])
+wavelength <- c(
+  404.08, 408.5, 412.92, 417.36, 
+  421.81, 426.27, 430.73, 435.20,
+  439.69, 444.18, 448.68, 453.18, 457.69, 462.22, 466.75, 471.29,
+  475.83, 480.39, 484.95, 489.52, 494.09, 498.68, 503.26, 507.86,
+  512.47, 517.08, 521.70, 526.32, 530.95, 535.58, 540.23, 544.88,
+  549.54, 554.20, 558.86, 563.54, 568.22, 572.90, 577.60, 582.29,
+  586.99, 591.70, 596.41, 601.13, 605.85, 610.58, 615.31, 620.05,
+  624.79, 629.54, 634.29, 639.04, 643.80, 648.56, 653.33, 658.10,
+  662.88, 667.66, 672.44, 677.23, 682.02, 686.81, 691.60, 696.40,
+  701.21, 706.01, 710.82, 715.64, 720.45, 725.27, 730.09, 734.91,
+  739.73, 744.56, 749.39, 754.22, 759.05, 763.89, 768.72, 773.56,
+  778.40, 783.24, 788.08, 792.93, 797.77, 802.62, 807.47, 812.32,
+  817.17, 822.02, 826.87, 831.72, 836.57, 841.42, 846.28, 851.13,
+  855.98, 860.83, 865.69, 870.54, 875.39, 880.24, 885.09, 889.94,
+  894.79, 899.64, 904.49, 909.34, 914.18, 919.03, 923.87, 928.71,
+  933.55, 938.39, 943.23, 948.07, 952.90, 957.73, 962.56, 967.39,
+  972.22, 977.04, 981.87, 986.68, 991.50, 996.31
+)
+speclib <- hsdar::speclib(raster, wavelength)
+mask(speclib) <- c(404, 418)
+hyperspecs <- hsdar::HyperSpecRaster(raster, wavelength)
+```
+
+# Loading required packages
+
+```{r 02-vegetation-indices-1, message=FALSE, eval = FALSE}
+library("raster")
+library("hsdar")
+library("here")
+library("rasterVis", )
+library("mapview")
+library("magrittr")
+library("stars")
+```
+
+# NDVI calculation
+
+## Option 1
+
+We can directly call `hsdar::vegindex()` on our `speclib` object to calculate a vegetation index, for example the "Normalized Difference Vegetation Index" (NDVI).
+
+```{r 02-vegetation-indices-2 }
+time <- Sys.time()
+ndvi_speclib <- vegindex(speclib, index = "NDVI2")
+Sys.time() - time
+```
+
+The resulting `speclib` file contains the new raster NDVI file (`ndvi_speclib@spectra@spectra_ra`). 
+It can be visualized by using the raster slot of the `speclib` object.
+
+```{r 02-vegetation-indices-3 }
+levelplot(ndvi_speclib@spectra@spectra_ra,
+  margin = FALSE,
+  pretty = TRUE, col.regions = rev(colorRamps::green2red(400)),
+  main = "NDVI [0;1]"
+)
+```
+
+The same logic applies if we want to write the calculated index to disk.
+
+```{r 02-vegetation-indices-4 }
+writeRaster(ndvi_speclib@spectra@spectra_ra,
+  paste0(here("data/"), "/ndvi.tif"),
+  overwrite = TRUE
+)
+```
+
+## Option 2
+
+It is also possible to use an object of class `HyperSpecRaster` in combination with the _raster_ package to calculate vegetation indices. 
+During the function call our object gets automatically converted to class `speclib` and will be transformed back after success. 
+
+This approach is not supported by the _hsdar_  package.
+I wrote a wrapper function called `hsdar.vegIndex()` which is avaible on Github.
+You can install it via `remotes::install_github("pat-s/rasterFunctions")`. 
+
+*What does it do?*
+
+This function is an approach for large raster file processing using the _raster_ package (`vignette("functions", package = "raster")`) and `hsdar::vegindex()` as the workhorse function. 
+
+*Why is this needed?*
+
+Because R processes everything in memory by default, you get in trouble quite early when dealing with large raster files. 
+The image here has 28350 spectra/pixels (162 columns, 175 rows) and takes just a few seconds.
+However in practice you might find yourself in situations with much larger raster files which might exceed your memory.
+
+One solution for this problem is to do the processing in chunks/blocks and interactively write the calculated values to disk.
+
+(If you want to adapt it this function and use another workhorse function than `hsdar::vegindex()`, just replace the `v <- as.matrix(vegindex(v, index = veg.index))` line with the desired processing function.)
+
+```{r 02-vegetation-indices-5, dependson='part1:createhyperspec'}
+time <- Sys.time()
+ndvi_hyperspecraster <- rasterFunctions::hsdar.vegIndex(hyperspecs,
+  veg.index = "NDVI2", nl = 1, paste0(here("data/"), "/ndvi.tif")
+)
+Sys.time() - time
+```
+
+Note the time difference of both approaches: The default `speclib` approach (option 1) takes longer and needs more memory (not shown here). 
+However, you can directly use the _speclib_ object and you do not need to install another package. 
+
+For convenience you should use the `speclib` approach and only use the `HyperSpecRaster` approach when you work with large raster files. 
+
+Here, we used the formula `NDVI2`. 
+Check `?vegindex` to see all available indices. 
+
+# Normalized ratio indices
+
+Also called 'Narrow band indices' or 'Normalized Ratio Indices' (NRI) are NDVI-like ratios with custom bands:
+
+$$
+nri_{B1,B2}=\frac{R_{B1}-R_{B2}}{R_{B1}+R_{B2}}
+$$
+There are two possibilities on how to work with NRIs. 
+Either you assign two bands by wavelength from which the NRI should be calculated or you assign `recursive=TRUE` which means that NRIs will be calculated for all possible band combinations.
+
+For our example with 126 bands this would mean that there would be 122*121 (= 14762) possible combinations. 
+Since each band has 28350 spectra/pixels (162 columns, 175 rows), we end up with 418.502.700 total calculations for this image.
+
+If there is some time at the end, you can experiment with NRI calculation at the end of the session with the help of the `hsdar` vignette (`vignette("hsdar-intro")`). 

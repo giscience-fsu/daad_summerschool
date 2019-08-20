@@ -1,0 +1,167 @@
+---
+title: "Part 5: Continuum Removal"
+author: "Patrick Schratz"
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
+output: 
+  html_document:
+    theme: paper
+    highlight: haddock 
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+## knitr options
+knitr::opts_chunk$set(comment = "")
+
+library("raster")
+library("hsdar")
+library("here")
+library("rasterVis", )
+library("mapview")
+library("magrittr")
+library("stars")
+
+# create objects from previous document
+file <- here("data") %>%
+  list.files(pattern = ".tif$", full.names = TRUE)
+raster <- raster::brick(file[1])
+wavelength <- c(
+  404.08, 408.5, 412.92, 417.36, 
+  421.81, 426.27, 430.73, 435.20,
+  439.69, 444.18, 448.68, 453.18, 457.69, 462.22, 466.75, 471.29,
+  475.83, 480.39, 484.95, 489.52, 494.09, 498.68, 503.26, 507.86,
+  512.47, 517.08, 521.70, 526.32, 530.95, 535.58, 540.23, 544.88,
+  549.54, 554.20, 558.86, 563.54, 568.22, 572.90, 577.60, 582.29,
+  586.99, 591.70, 596.41, 601.13, 605.85, 610.58, 615.31, 620.05,
+  624.79, 629.54, 634.29, 639.04, 643.80, 648.56, 653.33, 658.10,
+  662.88, 667.66, 672.44, 677.23, 682.02, 686.81, 691.60, 696.40,
+  701.21, 706.01, 710.82, 715.64, 720.45, 725.27, 730.09, 734.91,
+  739.73, 744.56, 749.39, 754.22, 759.05, 763.89, 768.72, 773.56,
+  778.40, 783.24, 788.08, 792.93, 797.77, 802.62, 807.47, 812.32,
+  817.17, 822.02, 826.87, 831.72, 836.57, 841.42, 846.28, 851.13,
+  855.98, 860.83, 865.69, 870.54, 875.39, 880.24, 885.09, 889.94,
+  894.79, 899.64, 904.49, 909.34, 914.18, 919.03, 923.87, 928.71,
+  933.55, 938.39, 943.23, 948.07, 952.90, 957.73, 962.56, 967.39,
+  972.22, 977.04, 981.87, 986.68, 991.50, 996.31
+)
+wavelength2 <- c(
+  421.81, 426.27, 430.73, 435.20,
+  439.69, 444.18, 448.68, 453.18, 457.69, 462.22, 466.75, 471.29,
+  475.83, 480.39, 484.95, 489.52, 494.09, 498.68, 503.26, 507.86,
+  512.47, 517.08, 521.70, 526.32, 530.95, 535.58, 540.23, 544.88,
+  549.54, 554.20, 558.86, 563.54, 568.22, 572.90, 577.60, 582.29,
+  586.99, 591.70, 596.41, 601.13, 605.85, 610.58, 615.31, 620.05,
+  624.79, 629.54, 634.29, 639.04, 643.80, 648.56, 653.33, 658.10,
+  662.88, 667.66, 672.44, 677.23, 682.02, 686.81, 691.60, 696.40,
+  701.21, 706.01, 710.82, 715.64, 720.45, 725.27, 730.09, 734.91,
+  739.73, 744.56, 749.39, 754.22, 759.05, 763.89, 768.72, 773.56,
+  778.40, 783.24, 788.08, 792.93, 797.77, 802.62, 807.47, 812.32,
+  817.17, 822.02, 826.87, 831.72, 836.57, 841.42, 846.28, 851.13,
+  855.98, 860.83, 865.69, 870.54, 875.39, 880.24, 885.09, 889.94,
+  894.79, 899.64, 904.49, 909.34, 914.18, 919.03, 923.87, 928.71,
+  933.55, 938.39, 943.23, 948.07, 952.90, 957.73, 962.56, 967.39,
+  972.22, 977.04, 981.87, 986.68, 991.50, 996.31
+)
+speclib <- hsdar::speclib(raster, wavelength)
+mask(speclib) <- c(404, 418)
+hyperspecs <- hsdar::HyperSpecRaster(raster, wavelength)
+```
+
+# Theory
+
+The continuum removal approach is commonly applied to hyperspectral signatures to make these comparable among each other. 
+This is done by detection and normalization of the absorption features. While different methods exist in science, there are two which are most commonly used. 
+The 'convex hull' approach by Mutanga and Skidmore (2004) ^[Mutanga, O., Skidmore, A., 2004. Hyperspectral band depth analysis for a better es- timation of grass biomass (Cenchrus ciliaris) measured under controlled laboratory conditions. *International Journal of applied Earth Observation and Geoinformation 5 (2), 87–96.*] and the 'Segmented Hull' approach from Clark et al. (1987) ^[Clark, R. N., King, T. V. V., Gorelick, N. S., 1987. Automatic continuum analysis of reﬂectance spectra. *In: Proceedings of the Third Airborne Imaging Spectrometer Data Analysis Workshop. pp. 138–142.*]
+
+The vignette of the _hsdar_ package explains it as follows:
+
+> "Both hulls are established by connecting the local maxima, however, the precondition of the **convex hull** is that the resulting continuum line must be convex whereas considering the **segmented hull** it might be concave or convex but the algebraic sign of the slope is not allowed to change from the global maximum of the spectrum downwards to the sides. In contrast to a **convex hull**, the **segmented hull** is able to identify small absorption features."
+
+# Practice
+
+The following functions expect speclibs without NA values. 
+Since our raster is stored with its bounding box and therefore has a lot of background values containing NAs, we first need to create a filtered speclib object.  
+This fact actually also applies to `hsdar::vegindex()` and other _hsdar_ functions. 
+However, `hsdar::vegindex()` does the NA removal internally. 
+Other functions like the `transformSpeclib` function used in the following should also be able to handle NAs with one of the next package updates. 
+
+```{r 05-continuum-removal-1 }
+## Test if values are finite
+valid <- apply(spectra(speclib), 1, function(x) all(is.finite(x)))
+summary(valid)
+
+## Create a new Speclib with valid pixels only
+## wavelength2 is a wavelength vector without the first four corrupted bands
+speclib_valid <- speclib(spectra(speclib)[valid, ], wavelength2)
+```
+
+`hsdar::transformSpeclib()` takes two arguments besides the data: 
+
+* The `method` to be used (either `ch` or `sh`)
+* The type of return value `out` (see `?transformSpeclib` for details)
+
+When `out = "raw"`, the returned object is of class `clman`. 
+This stands for 'manual continuum lines'.  
+For `out = "bd"` and `out = "ratio"`, the returned object is of class `speclib`. 
+
+The output types `band depth` and `ratio` are calculated with the following formulas:
+
+**Band depth: **
+
+$$
+BD_\lambda = 1-\frac{R_\lambda}{CV_\lambda}
+$$
+
+**Ratio: **
+
+$$
+BD_\lambda = \frac{R_\lambda}{CV_\lambda}
+$$
+
+where $BD$ is the band depth, $R$ is the reflectance and $CV$ is the continuum value at the wavelength $\lambda$.
+
+In the following we are calculating all possible return types (`raw`, `bd` and `ratio`) for both methods (`sh` & `ch`).
+
+```{r 05-continuum-removal-2 }
+### convex hull:
+
+# out = 'raw'
+ch_cline <- transformSpeclib(speclib_valid, method = "ch", out = "raw")
+# out = 'bd'
+ch_bd <- transformSpeclib(speclib_valid, method = "ch", out = "bd")
+# out = 'ratio'
+ch_ratio <- transformSpeclib(speclib_valid, method = "ch", out = "ratio")
+
+### segmented hull:
+# out = 'raw'
+sh_cline <- transformSpeclib(speclib_valid, method = "sh", out = "raw")
+# out = 'bd'
+sh_bd <- transformSpeclib(speclib_valid, method = "sh", out = "bd")
+# out = 'ratio'
+sh_ratio <- transformSpeclib(speclib_valid, method = "sh", out = "ratio")
+```
+
+Visualization of the results of the first spectrum:
+
+```{r 05-continuum-removal-3 }
+par(mfrow = c(2, 3))
+
+plot(ch_cline, ispec = 1, numeratepoints = FALSE, main = "Convex hull - Continuum line")
+plot(ch_bd, ispec = 1, main = "Convex hull - Band depth")
+plot(ch_ratio, ispec = 1, main = "Convex hull - Ratio")
+
+plot(sh_cline, ispec = 1, numeratepoints = FALSE, main = "Segmented hull - Continuum line")
+plot(sh_bd, ispec = 1, main = "Segmented hull - Band depth")
+plot(sh_ratio, ispec = 1, main = "Segmented hull - Ratio")
+```
+
+A practical hint: You can always track the modifications you made to your file accessing the `@usagehistory` slot of the respective `speclib` object.
+
+```{r 05-continuum-removal-4 }
+ch_ratio@usagehistory
+```

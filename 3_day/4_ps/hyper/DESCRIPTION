@@ -1,0 +1,46 @@
+Type: Compendium
+Package: hyperspectralSchratz
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.1
+Authors@R: 
+    person(given = "First",
+           family = "Last",
+           role = c("aut", "cre"),
+           email = "first.last@example.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: hsdar tutorial for the DAAD summer school
+    2019
+License: What license it uses
+Depends: 
+    caret,
+    colorRamps,
+    dplyr,
+    ggplot2,
+    ggthemes,
+    here,
+    hsdar,
+    knitr,
+    link2GI,
+    magrittr,
+    mapview,
+    mgcv,
+    pander,
+    plotly,
+    raster,
+    rasterVis,
+    RColorBrewer,
+    reportMD,
+    rgrass7,
+    rmarkdown,
+    RQGIS3,
+    RSAGA,
+    sf,
+    sp,
+    spData,
+    sperrorest,
+    stars,
+    stats
+Remotes: 
+    pat-s/rasterFunctions
+Encoding: UTF-8
+LazyData: true

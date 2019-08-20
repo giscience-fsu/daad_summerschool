@@ -1,0 +1,178 @@
+---
+title: "Part 1: Data investigation & preprocessing"
+author: "Patrick Schratz"
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
+output: 
+  html_document:
+    theme: paper
+    highlight: haddock 
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+## knitr options
+#knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(comment = "")
+```
+
+# Loading required packages
+
+This is the first part of an hands-on tutorial using the `hsdar` package for hyperspectral data processing.  
+At the beginning, we will load all necessary packages for this analysis. 
+
+```{r 01-preprocessing-1, message=FALSE}
+library("raster")
+library("hsdar")
+library("here")
+library("rasterVis")
+library("mapview")
+library("magrittr")
+library("stars")
+```
+
+# Reading data and creating a 'RasterBrick'
+
+The hyperspectral image file for this analysis is shared with you in the MSCJ LIFE Slack group.  
+Please download it and set the correct path.
+
+The first step is to list all files within your working directory. This is the usual step when dealing with multiple files. 
+Here, the file is stored in a subdirectory of this .Rmd file called 'data'. We list all files with a specific ending using the full path. 
+
+```{r 01-preprocessing-2 }
+# list files
+file <- here("data") %>% 
+  list.files(pattern = ".tif$", full.names = TRUE)
+```
+
+Next, we will read in these files as 'raster bricks' into R. 
+
+```{r 01-preprocessing-3 }
+raster <- raster::brick(file[1])
+raster
+```
+
+Our image has 126 bands (nlayers), a spatial resolution of 1 meters and an UTM reference system (EPSG: 32630). 
+
+# Visualization {.tabset .tabset-fade}
+
+Let's take a quick look at the image. Band 100 is randomly chosen. 
+Various options exists meanwhile in R for plotting spatial grid data:
+
+- _rasterVis_
+- _mapview_
+- _stars_
+- _ggplot2_ (via stars)
+
+## rasterVis
+
+```{r 01-preprocessing-4 }
+levelplot(raster[[97:100]], margin = FALSE, pretty = TRUE)
+```
+
+## stars
+
+```{r 01-preprocessing-5 }
+img = stars::read_stars("data/laukiz1.tif")
+plot(img[,,,97:100])
+```
+
+## mapview
+
+```{r 01-preprocessing-6 }
+mapview(raster[[97:100]], na.color = "transparent", map.types = "Esri.WorldImagery")
+```
+
+_mapview_ also supports a grid splitting of individual bands:
+
+```{r 01-preprocessing-7}
+m1 = mapview(raster[[97]], na.color = "transparent", map.types = "Esri.WorldImagery")
+m2 = mapview(raster[[98]], na.color = "transparent", map.types = "Esri.WorldImagery")
+m3 = mapview(raster[[99]], na.color = "transparent", map.types = "Esri.WorldImagery")
+m4 = mapview(raster[[100]], na.color = "transparent", map.types = "Esri.WorldImagery")
+
+sync(m1, m2, m3, m4)
+```
+
+
+## ggplot2
+
+```{r 01-preprocessing-8 }
+ggplot() +
+  geom_stars(data = img[,,,97:100]) +
+  scale_fill_viridis_c() +
+  ggthemes::theme_map()
+```
+
+# Transformation into 'Speclib' or 'HyperSpecRaster' 
+
+Until now, we 'only' have a raster file of class `RasterBrick`. 
+While there would be a lot of options for further analysis with this `RasterBrick` object, `hsdar` requires its own class(es) for further analysis.
+There are two options: 
+- For most `hsdar` functions an object of class `speclib` is required. 
+- If you have large raster files and want to perform high-performance processing using the _raster_ package, class `HyperSpecRaster` is needed. 
+
+The first step is to merge the wavelength information with the `RasterBrick` file.
+There is no way around creating a vector by hand that stores the band information.
+
+(This information was extracted from the metadata information of this image file.)
+
+```{r 01-preprocessing-9 }
+wavelength <- c(404.08, 408.5, 412.92, 417.36, 421.81, 426.27, 430.73, 435.20, 
+                439.69, 444.18, 448.68, 453.18, 457.69, 462.22, 466.75, 471.29,
+                475.83, 480.39, 484.95, 489.52, 494.09, 498.68, 503.26, 507.86,
+                512.47, 517.08, 521.70, 526.32, 530.95, 535.58, 540.23, 544.88,
+                549.54, 554.20, 558.86, 563.54, 568.22, 572.90, 577.60, 582.29,
+                586.99, 591.70, 596.41, 601.13, 605.85, 610.58, 615.31, 620.05,
+                624.79, 629.54, 634.29, 639.04, 643.80, 648.56, 653.33, 658.10,
+                662.88, 667.66, 672.44, 677.23, 682.02, 686.81, 691.60, 696.40,
+                701.21, 706.01, 710.82, 715.64, 720.45, 725.27, 730.09, 734.91,
+                739.73, 744.56, 749.39, 754.22, 759.05, 763.89, 768.72, 773.56, 
+                778.40, 783.24, 788.08, 792.93, 797.77, 802.62, 807.47, 812.32,
+                817.17, 822.02, 826.87, 831.72, 836.57, 841.42, 846.28, 851.13,
+                855.98, 860.83, 865.69, 870.54, 875.39, 880.24, 885.09, 889.94,
+                894.79, 899.64, 904.49, 909.34, 914.18, 919.03, 923.87, 928.71,
+                933.55, 938.39, 943.23, 948.07, 952.90, 957.73, 962.56, 967.39,
+                972.22, 977.04, 981.87, 986.68, 991.50, 996.31)
+```
+
+Now is the point at which the `hsdar` package comes into play. 
+Let's fusion our raster file and the wavelength information.
+
+We use the function `HyperSpecRaster()` and `speclib()`. 
+The first argument will be our `RasterBrick` file, the second one the vector with the wavelength information.
+
+```{r 01-preprocessing-10 }
+hyperspecs <- hsdar::HyperSpecRaster(raster, wavelength)
+class(hyperspecs)
+```
+
+```{r 01-preprocessing-11 }
+speclib <- hsdar::speclib(raster, wavelength)
+class(speclib)
+```
+
+We now have two files: 
+
+1. A raster file of class `HyperSpecRaster`. 
+  With this, we can do calculations on every spectrum (equals every pixel here) of our dataset using the _hsdar_ package in combination with the _raster_ package. 
+  However, plotting of spectra and other functions of the _hsdar_ package do not work with class `HyperSpecRaster`.
+
+2. An object of class `speclib`. 
+  With this, we can perform any task that the _hsdar_ package offers. 
+  Hence, we will use this object for all further processing from this point onward. 
+  
+# Subsetting speclibs
+
+By inspecting the file we notice that the first four bands are corrupt.
+A spectra can be subsetted using `hsdar::mask()`.
+In our case, we specify the start and end values of the affected wavelengths:
+
+```{r 01-preprocessing-12}
+mask(speclib) <- c(404, 418)
+speclib
+```
+
+In the next document (`vegetation-indices.Rmd`), we will calculate different vegetation indices. 
