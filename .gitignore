@@ -11,4 +11,6 @@ misc
 !README.Rmd
 *.pptx
 libs
-
+.local
+.plotly
+.rstudio
