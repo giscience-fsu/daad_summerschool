@@ -11,4 +11,9 @@ misc
 !README.Rmd
 *.pptx
 libs
-
+.local
+.plotly
+.rstudio
+!ecol_mod_task.html
+solution_ecol_mod.R
+solutions
