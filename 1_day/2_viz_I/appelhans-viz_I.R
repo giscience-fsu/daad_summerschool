@@ -3,6 +3,9 @@ suppressPackageStartupMessages({
   library("RColorBrewer")
   library("mapview")
   library("leaflet")
+  library("plainview")
+  library("slideview")
+  library("cubeview")
 })
 
 #+ setup, echo=FALSE
