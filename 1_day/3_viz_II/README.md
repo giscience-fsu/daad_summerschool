@@ -2,3 +2,6 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ## Learning objectives
+
+  - get to know some handy extensions to leaflet and mapview
+  - learn how to display and investigate large spatial data sets in R

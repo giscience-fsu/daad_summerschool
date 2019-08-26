@@ -6,3 +6,5 @@ output: github_document
 
 ## Learning objectives
 
+ - get to know some handy extensions to leaflet and mapview
+ - learn how to display and investigate large spatial data sets in R

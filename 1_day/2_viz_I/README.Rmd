@@ -6,3 +6,4 @@ output: github_document
 
 ## Learning objectives
 
+ - learn how to quickly visualise and interactively explore geospatial data sets
