@@ -137,7 +137,7 @@ mapview()
 
 #' ### with some data
 #+ eval=TRUE
-mapview(breweries)
+mapview(franconia)
 m = mapview(breweries)
 
 #' ### mapview structure
@@ -237,7 +237,7 @@ mapview(poppendorf[[4]])
 #' Apart from the standard `mapview()` call for raster layers and stacks, we
 #' have some special functionality to aid raster visualisation.
 #'
-mapview(poppendorf)
+mapview(poppendorf[[4]], query.type = "click")
 
 #' ### viewRGB
 #'

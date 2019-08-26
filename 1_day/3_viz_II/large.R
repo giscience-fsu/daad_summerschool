@@ -94,12 +94,14 @@ roads = st_read("/home/timpanse/software/data/large.gpkg",
 
 clrs = colour_values_rgb(roads$type, include_alpha = FALSE) / 255
 
+options(viewer = NULL)
+
 leaflet() %>%
   addTiles(group = "OSM") %>%
   addProviderTiles("CartoDB.DarkMatter", group = "Carto") %>%
   addGlPolylines(data = roads,
                  color = clrs,
-                 # popup = "type",
+                 popup = "oneway",
                  opacity = 1,
                  group = "roads") %>%
   addLayersControl(baseGroups = c("OSM", "Carto"),
