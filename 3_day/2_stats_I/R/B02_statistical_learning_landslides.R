@@ -1,9 +1,9 @@
 ####################################################
-# Environmental Statistics and GeoComputation
+# DAAD Summer School 2019
 # GEO 408 FSU Jena
-# Alexander Brenning and Jason Goetz
-# Date: Winter 2019
-####################################################
+# Alexander Brenning and Patrick Schratz
+# Date: Summer 2019
+###################################################
 # Statistical learning for classification
 # Case study: landslides in Ecuador
 ####################################################
@@ -14,17 +14,13 @@
 # Transform some of the variables
 ##############################################
 
-
-# This is where my raster data from Ecuador is located:
-setwd("D:/ecuador/data")
-
 library(ROCR)
 library(gam)
 library(rpart)
 library(randomForest)
 
 # Load the saved training/test data:
-(load("landslides.Rd"))
+(load(here("R/data/landslides.Rd")))
 
 # A function for plotting ROC curves and
 # calculating the area under the ROC curve (AUROC)

@@ -1,8 +1,8 @@
 ####################################################
-# Environmental Statistics and GeoComputation
+# DAAD Summer School 2019
 # GEO 408 FSU Jena
-# Alexander Brenning and Jason Goetz
-# Date: Winter 2019
+# Alexander Brenning and Patrick Schratz
+# Date: Summer 2019
 ####################################################
 # Introduction to RSAGA
 # Case study: landslides in Ecuador
