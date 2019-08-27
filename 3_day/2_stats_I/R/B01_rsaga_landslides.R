@@ -55,7 +55,7 @@ rsaga.esri.to.sgrd(here("R/data/dem.asc"), env = env, display.command = TRUE)
 # the low-level rsaga.geoprocessor:
 rsaga.get.usage("io_grid", "Import ESRI Arc/Info Grid", env = env)
 rsaga.geoprocessor("io_grid", "Import ESRI Arc/Info Grid",
-  param = list(GRID = "dem.sgrd", FILE = here("R/data/dem.asc")),
+  param = list(GRID = here("R/data/dem.sgrd"), FILE = here("R/data/dem.asc")),
   display.command = TRUE, env = env
 )
 # ...but we'd rather prefer the more convenient higher-level front-end
@@ -66,26 +66,27 @@ rsaga.geoprocessor("io_grid", "Import ESRI Arc/Info Grid",
 
 # Slope, aspect, plan and profile curvature:
 rsaga.slope.asp.curv(here("R/data/dem"),
-  out.slope = "slope", out.cplan = "plancurv",
-  out.cprof = "profcurv", method = "poly2zevenbergen", env = env
+  out.slope = here("R/data/slope"), out.cplan = here("R/data/plancurv"),
+  out.cprof = here("R/data/profcurv"), method = here("R/data/poly2zevenbergen"),
+  env = env
 )
 ## SAGA versions older than 2.1.1 use this instead of rsaga.slope.asp.curv:
 ## rsaga.local.morphometry("dem", out.slope = "slope",
 ##        out.hcurv = "plancurv", out.vcurv = "profcurv",
 ##        method = "poly2zevenbergen", env=env)
 # Create a hydrologically more meaningful DEM by filling any local sinks:
-rsaga.sink.removal("dem", out.dem = "sdem", method = "fill", env = env)
+rsaga.sink.removal("dem", out.dem = here("R/data/sdem"), method = "fill", env = env)
 # Use the multiple flow direction algorithm to calculate catchment area and slope:
-rsaga.parallel.processing("sdem",
-  out.carea = "carea",
-  out.cslope = "cslope", method = "mfd", env = env
+rsaga.parallel.processing(here("R/data/sdem"),
+  out.carea = here("R/data/carea"),
+  out.cslope = here("R/data/cslope"), method = "mfd", env = env
 )
 
 # Convert terrain attribute grids into ASCII format:
 rsaga.sgrd.to.esri(c(
-  here("R/data/slope.asc"), here("R/data/plancurv.asc"),
-  here("R/data/profcurv.asc"), here("R/data/carea.asc"),
-  here("R/data/cslope.asc")
+  here("R/data/slope.asc", "R/data/plancurv.asc", "R/data/profcurv.asc",
+       "R/data/carea.asc", "R/data/cslope.asc"
+       )
 ), env = env)
 
 # Delete SAGA grids, we don't need them any more, unless you want to view them in SAGA GIS:
@@ -157,9 +158,9 @@ summary(fit)
 # Apply this preliminary model on a pixel-by-pixel basis to a stack of
 # ASCII raster files with equal extent and resolution:
 multi.local.function(
-  in.grids = here(c("R/data/slope.asc", "R/data/distroad.asc")), out.varnames = "glmpred_prelim",
+  in.grids = c("slope", "distroad"), out.varnames = "glmpred_prelim",
   fun = grid.predict, fit = fit, control.predict = list(type = "response"),
-  quiet = FALSE
+  quiet = FALSE, path = here("R/data")
 )
 
 # multi.local.function has several siblings (local.function, focal.function
@@ -171,7 +172,7 @@ multi.local.function(
 focal.function(
   in.grid = "glmpred_prelim", varnames = "glmpred_prelim_max",
   radius = 3, search.mode = "circle", fun = max,
-  mw.to.vector = TRUE, mw.na.rm = TRUE
+  mw.to.vector = TRUE, mw.na.rm = TRUE, path = here("R/data")
 )
 
 # Instead of 'max', we could use a user-defined function such as:
@@ -181,7 +182,7 @@ my.max <- function(x) {
 }
 focal.function(
   in.grid = "glmpred_prelim", varnames = "glmpred_prelim_mymax",
-  radius = 3, search.mode = "circle", fun = my.max
+  radius = 3, search.mode = "circle", fun = my.max, path = here("R/data")
 )
 
 # That's all for now... Now you have a general overview of the
@@ -189,8 +190,8 @@ focal.function(
 
 ## Make a 'nice' displace of your results
 library(raster)
-hillshade <- raster("hillshade.tif")
-pred <- raster("glmpred_prelim.asc")
+hillshade <- raster(here("R/data/hillshade.tif"))
+pred <- raster(here("R/data/glmpred_prelim.asc"))
 plot(hillshade,
   col = gray.colors(10, start = 0.3, end = 0.9, gamma = 2.2, alpha = NULL),
   legend = FALSE, main = "Landslide Susceptibility"
