@@ -6,7 +6,6 @@
 *.Rmd
 *.css
 img
-*.Rproj
 misc
 !README.Rmd
 *.pptx
