@@ -146,15 +146,17 @@ auroc(pred, d$slides89 == "TRUE", plot = TRUE)
 # Apply fitted GAM to the entire study area:
 library(RSAGA)
 multi.local.function(
-  in.grids = c("slope", "carea", "cslope", "plancurv", "profcurv", "distroad", "distdeforest"),
-  out.varnames = "gampred",
+  in.grids = c("slope", "carea", "cslope",
+               "plancurv", "profcurv",
+               "distroad", "distdeforest"),
+  out.varnames = "gampred", path = here("R/data"),
   fun = grid.predict, control.predict = list(type = "response"),
   fit = fit, trafo = my.trafo, quiet = FALSE
 )
 
 # Plot prediction map
 library(raster)
-gam.raster <- raster("gampred.asc")
+gam.raster <- raster(here("R/data/gampred.asc"))
 plot(gam.raster)
 
 ##############################################
@@ -177,13 +179,13 @@ auroc(pred, d$slides89 == "TRUE", plot = TRUE)
 
 multi.local.function(
   in.grids = c("slope", "plancurv", "profcurv", "carea", "cslope", "distroad", "distdeforest"),
-  out.varnames = "ctpred",
+  out.varnames = "ctpred", path = here("R/data"),
   fun = grid.predict, control.predict = list(type = "prob"),
   fit = fit, trafo = my.trafo, predict.column = "TRUE",
   quiet = FALSE
 )
 
-ct.raster <- raster("ctpred.asc")
+ct.raster <- raster(here("R/data/ctpred.asc"))
 plot(ct.raster)
 
 
@@ -207,14 +209,14 @@ auroc(pred, d$slides89 == "TRUE", plot = TRUE)
 
 multi.local.function(
   in.grids = c("slope", "plancurv", "profcurv", "carea", "cslope", "distroad", "distdeforest"),
-  out.varnames = paste("rfpred", sep = ""),
+  out.varnames = paste("rfpred", sep = ""), path = here("R/data"),
   fun = grid.predict, control.predict = list(type = "prob"),
   fit = fit, trafo = my.trafo, predict.column = "TRUE",
   quiet = FALSE
 )
 
 library(raster)
-rf.raster <- raster("rfpred.asc")
+rf.raster <- raster(here("R/data/rfpred.asc"))
 plot(rf.raster)
 
 #####################################################
@@ -223,11 +225,11 @@ plot(rf.raster)
 library(raster)
 
 # Load input rasters - can be other file types, e.g. tif, .img, ...
-plancurv <- raster("plancurv.asc")
-profcurv <- raster("profcurv.asc")
+plancurv <- raster(here("R/data/plancurv.asc"))
+profcurv <- raster(here("R/data/profcurv.asc"))
 
 # Don't forget the transformations we applied to the data
-log.carea <- log10(raster("carea.asc"))
+log.carea <- log10(raster(here("R/data/carea.asc")))
 # or
 # carea <- raster('carea.asc')
 # log.carea <- calc(carea, fun= function(x){log10(x)})
@@ -236,16 +238,16 @@ names(log.carea) <- "log.carea"
 rad.to.degree <- function(x) {
   x * 180 / pi
 }
-slope <- calc(raster("slope.asc"), fun = rad.to.degree)
+slope <- calc(raster(here("R/data/slope.asc")), fun = rad.to.degree)
 names(slope) <- "slope"
 
-cslope <- calc(raster("cslope.asc"), fun = rad.to.degree)
+cslope <- calc(raster(here("R/data/cslope.asc")), fun = rad.to.degree)
 names(cslope) <- "cslope"
 
-distroad <- raster("distroad.asc")
+distroad <- raster(here("R/data/distroad.asc"))
 distroad[distroad > 300] <- 300
 
-distdeforest <- raster("distdeforest.asc")
+distdeforest <- raster(here("R/data/distdeforest.asc"))
 distdeforest[distdeforest > 300] <- 300
 
 
@@ -260,12 +262,12 @@ predfun.rf <- function(object, newdata) {
 }
 
 rf <- raster::predict(layers, fit, fun = predfun.rf, progress = "text")
-writeRaster(rf, "pred_rf.img", format = "HFA", overwrite = TRUE)
+writeRaster(rf, here("R/data/pred_rf.img"), format = "HFA", overwrite = TRUE)
 
 plot(rf)
 
 # Make nice plot of results
-hillshade <- raster("hillshade.tif")
+hillshade <- raster(here("R/data/hillshade.tif"))
 plot(hillshade,
   col = gray.colors(10, start = 0.3, end = 0.9, gamma = 2.2, alpha = NULL),
   legend = FALSE, main = "Landslide Susceptibility"
