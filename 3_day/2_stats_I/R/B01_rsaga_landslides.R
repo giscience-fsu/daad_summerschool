@@ -12,6 +12,9 @@
 library(RSAGA)
 library(here)
 library(fs)
+library(conflicted)
+
+conflict_prefer("here", "here")
 
 # Please open '2_stats_I.Rproj' in RStudio. Package 'here' will then take care
 # of all file path handling throughout the session for you.
@@ -84,9 +87,10 @@ rsaga.parallel.processing(here("R/data/sdem"),
 
 # Convert terrain attribute grids into ASCII format:
 rsaga.sgrd.to.esri(c(
-  here("R/data/slope.asc", "R/data/plancurv.asc", "R/data/profcurv.asc",
-       "R/data/carea.asc", "R/data/cslope.asc"
-       )
+  here(
+    "R/data/slope.asc", "R/data/plancurv.asc", "R/data/profcurv.asc",
+    "R/data/carea.asc", "R/data/cslope.asc"
+  )
 ), env = env)
 
 # Delete SAGA grids, we don't need them any more, unless you want to view them in SAGA GIS:

@@ -18,9 +18,13 @@ library(ROCR)
 library(gam)
 library(rpart)
 library(randomForest)
+library(here)
+library(conflicted)
+
+conflict_prefer("here", "here")
 
 # Load the saved training/test data:
-(load(here("R/data/landslides.Rd")))
+(load("R/data/landslides.Rd"))
 
 # A function for plotting ROC curves and
 # calculating the area under the ROC curve (AUROC)
@@ -145,11 +149,15 @@ auroc(pred, d$slides89 == "TRUE", plot = TRUE)
 
 # Apply fitted GAM to the entire study area:
 library(RSAGA)
+# due to a bug in RSAGA we need to hand over a real string of the folder path
+# instead of using `here()`
 multi.local.function(
-  in.grids = c("slope", "carea", "cslope",
-               "plancurv", "profcurv",
-               "distroad", "distdeforest"),
-  out.varnames = "gampred", path = here("R/data"),
+  in.grids = c(
+    "slope.asc", "carea.asc", "cslope.asc",
+    "plancurv.asc", "profcurv.asc",
+    "distroad.asc", "distdeforest.asc"
+  ),
+  out.varnames = "gampred", in.path = here("R/data"),
   fun = grid.predict, control.predict = list(type = "response"),
   fit = fit, trafo = my.trafo, quiet = FALSE
 )
