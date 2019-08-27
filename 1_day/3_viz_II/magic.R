@@ -43,7 +43,7 @@ options(viewer = rstudioapi::viewer)
 #' `leafem::addCopyExtent()` let's us copy the extent of the current view
 #' to the clipboard:
 leaflet() %>%
-  addProviderTiles("CartoDB.Positron") %>%
+  addProviderTiles("Esri.WorldImagery") %>%
   addCopyExtent(event.code = "KeyE") %>%
   addMouseCoordinates()
 
