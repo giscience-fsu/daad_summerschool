@@ -24,10 +24,11 @@ library(randomForest)
 # parallelization mode for sperrorest:
 # the default argument will normally do the job:
 # par_args <- list(par_mode = "foreach", par_units = NULL, par_option = NULL)
-# but there are some problems on the lab computers - use this:
+# if you want to test parallelization, use the following
+# par_args <- list(par_mode = "foreach")
 par_args <- list(par_mode = "sequential")
-# Also note that warnings and errors may be suppressed
-# when using sperrorest in parallel mode!
+# (Also note that warnings and errors may be suppressed
+# when using sperrorest in parallel mode!)
 
 # Load the data set:
 (load(here("R/data/Maipo_fields.Rdata")))
