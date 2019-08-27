@@ -44,7 +44,7 @@ class(poly_1)
 # finally, convert it into an sf-object
 poly_1 = st_sf(geometry = poly_1)
 # you could also add attribute data
-# st_sf(data.frame(id = 1, name = "poly_1"), geometry = poly_1)
+# st_sf(data.frame(id = 1, name = int"poly_1"), geometry = poly_1)
 
 # create a second polygon
 poly_2 = st_polygon(list((coords_2))) %>%
@@ -63,8 +63,11 @@ st_geometry(poly_2) %>%
 # first of all, we need to find out which function might do this for us
 find_algorithms("intersec")
 get_usage("native:intersection")
-# using R named arguments#
-int = run_qgis("native:intersection", INPUT = poly_1, OVERLAY = poly_2,
+get_args_man("native:intersection")
+# using R named arguments
+int = run_qgis("native:intersection", 
+               INPUT = poly_1, 
+               OVERLAY = poly_2,
                OUTPUT = file.path(tempdir(), "out.shp"),
                load_output = TRUE)
 
