@@ -16,7 +16,7 @@
 #   Assessing the quality of landslide susceptibility maps-case study 
 #   Lower Austria. Natural Hazards and Earth System Sciences, 14(1), 95-118.
 #
-# Brenning, A., Schwinn, M., Ruiz-Páez, A. P., & Muenchow, J. (2015). 
+# Brenning, A., Schwinn, M., Ruiz-PÃ¡ez, A. P., & Muenchow, J. (2015). 
 #   Landslide susceptibility near highways is increased by 1 order of magnitude 
 #   in the Andes of southern Ecuador, Loja province. Natural Hazards and Earth 
 #   System Sciences, 15(1), 45-57.
@@ -222,7 +222,7 @@ plot(model.gam)
 # since repetead (spatial) cross-validation can be computationally
 # intensive, we will perform spatial cv using 5-folds and 50 reptitions
 
-# peform 50 repeated, 5-fold spatial cv for the logistic regression model
+# perform 50 repeated, 5-fold spatial cv for the logistic regression model
 lr.results <- sperrorest(formula = fml, data = ecuador, coords = c("x","y"),
                           model_fun = glm, 
                           model_args = list(family = 'binomial'),
@@ -236,7 +236,7 @@ lr.auroc.test <- unlist(summary(lr.results$error_rep,level=1)[,"test_auroc"])
 mean(lr.auroc.test)
 sd(lr.auroc.test)
 
-# peform 50 repeated, 5-fold spatial cv for the generalized additive model
+# perform 50 repeated, 5-fold spatial cv for the generalized additive model
 gam.results <- sperrorest(formula = fml, data = ecuador, coords = c("x","y"),
                          model_fun = my.gam, 
                          pred_args = list(type="response"), 
@@ -276,7 +276,7 @@ pred.gam<- raster::predict(layers, model.gam, type = "response", progress = TRUE
 writeRaster(pred.lr, "susc_model_lr.tiff", format = "GTiff", overwrite = TRUE)
 writeRaster(pred.gam, "susc_model_gam.tiff", format = "GTiff", overwrite = TRUE)
 
-# visualize spatial make 'nice' displace of your results
+# visualize results - we can use a hillshade model to help
 par(mfrow=c(1,2), mex=0.7, c(5, 4, 4, 2) + 0.1)
 hillshade <- raster('hillshade.tif')
 
