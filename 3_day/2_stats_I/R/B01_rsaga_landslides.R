@@ -202,3 +202,4 @@ plot(hillshade,
 )
 plot(pred, alpha = 0.60, add = TRUE)
 points(d, cex = 0.5)
+
