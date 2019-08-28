@@ -17,7 +17,6 @@
 # 1 ATTACH PACKAGES AND DATA-------------------------------
 #**********************************************************
 
-change something
 # attach packages
 library("RQGIS3")
 library("sf")
@@ -26,18 +25,18 @@ library("mapview")
 library("dplyr")
 
 # create two polygons for a toy example
-coords_1 =
+coords_1 =  
   matrix(data = c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0),
          ncol = 2, byrow = TRUE)
 coords_2 =
-  matrix(data = c(-0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
+  matrix(data = c(-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 
                   -0.5, 0.5, -0.5, -0.5),
          ncol = 2, byrow = TRUE)
 
 # create the first polygon
-poly_1 = st_polygon(list((coords_1)))
+poly_1 = st_polygon(list((coords_1))) 
 class(poly_1)
-# convert it into a simple feature collection
+# convert it into a simple feature collection 
 poly_1 = st_sfc(poly_1)
 # you could als add a a coordinate reference
 # poly_1 = st_sfc(poly_1, crs = 4326)
@@ -66,8 +65,8 @@ find_algorithms("intersec")
 get_usage("native:intersection")
 get_args_man("native:intersection")
 # using R named arguments
-int = run_qgis("native:intersection",
-               INPUT = poly_1,
+int = run_qgis("native:intersection", 
+               INPUT = poly_1, 
                OVERLAY = poly_2,
                OUTPUT = file.path(tempdir(), "out.shp"),
                load_output = TRUE)
@@ -104,10 +103,10 @@ find_algorithms("wetness")
 alg = "saga:sagawetnessindex"
 get_usage(alg)
 get_args_man(alg)
-# well, we have to specifiy all output files, otherwise error messages will occur
+# well, we have to specifiy all output files, otherwise error messages will occur 
 # (maybe let the QGIS development team know...)
-twi = run_qgis(alg,
-               DEM = dem,
+twi = run_qgis(alg, 
+               DEM = dem, 
                AREA = file.path(tempdir(), "area.sdat"),
                SLOPE = file.path(tempdir(), "slope.sdat"),
                AREA_MOD = file.path(tempdir(), "area_mod.sdat"),
@@ -136,14 +135,14 @@ rsaga.env()
 rsaga.get.libraries()
 rsaga.get.modules(libs = "ta_hydrology")
 rsaga.get.usage(lib = "ta_hydrology", module = "SAGA Wetness Index")
-raster::writeRaster(dem, filename = file.path(tempdir(), "dem.sdat"),
+raster::writeRaster(dem, filename = file.path(tempdir(), "dem.sdat"), 
                     format = "SAGA")
 params = list(DEM = file.path(tempdir(), "dem.sgrd"),
               TWI = file.path(tempdir(), "twi.sdat"))
-rsaga.geoprocessor(lib = "ta_hydrology", module = "SAGA Wetness Index",
+rsaga.geoprocessor(lib = "ta_hydrology", module = "SAGA Wetness Index", 
                    param = params)
 # shortcut version
-# rsaga.wetness.index(in.dem = file.path(tempdir(), "dem.sgrd"),
+# rsaga.wetness.index(in.dem = file.path(tempdir(), "dem.sgrd"), 
 #                     out.wetness.index = file.path(tempdir(), "twi"))
 twi_saga = raster(file.path(tempdir(), "twi.sdat"))
 
@@ -160,7 +159,7 @@ plot(sf::st_intersection(poly_1, poly_2)$geometry, add = TRUE, col = "red")
 # rgeos::gIntersection has been slower compared to e.g., SAGA's intersection
 # algorithm. However, Edzer has added a spatial index to geometry functions
 # (e.g., st_intersection), so maybe sf is now as fast or even faster than
-# SAGA...
+# SAGA... 
 # for more information on spatial indexes, visit:
 # browseURL("http://r-spatial.org//r/2017/06/22/spatial-index.html")
 
@@ -171,9 +170,9 @@ get_usage("saga:intersect")
 # get_args_man("saga:intersect")
 
 # try: devtools::install_github("r-spatial/sf")
-int_2 = run_qgis("saga:intersect",
+int_2 = run_qgis("saga:intersect", 
                  A = poly_1,
-                 B = poly_2,
+                 B = poly_2, 
                  RESULT = file.path(tempdir(), "out_saga.shp"),
                  load_output = TRUE)
 
@@ -184,7 +183,7 @@ find_algorithms("overlay")
 get_usage("grass7:v.overlay")
 # to find out the defaults, use get_args_man
 # get_args_man("grass7:v.overlay")
-int_3 = run_qgis("grass7:v.overlay",
+int_3 = run_qgis("grass7:v.overlay", 
                  ainput = poly_1,
                  binput = poly_2,
                  output = file.path(tempdir(), "out_grass.shp"),
@@ -194,7 +193,7 @@ int_3 = run_qgis("grass7:v.overlay",
 #**********************************************************
 library("rgrass7")
 
-# assign a CRS and add some attribute data, otherwise writeVECT will complain
+# assign a CRS and add some attribute data, otherwise writeVECT will complain 
 # about an unknown data type
 st_crs(poly_1) = 4326
 poly_1$id = 1
@@ -257,10 +256,10 @@ get_usage(alg)
 get_args_man(alg)
 point = random_points[sample(1:nrow(random_points), 1), ]
 coord = paste(sf::st_coordinates(point), collapse = ",")
-out = run_qgis(alg,
+out = run_qgis(alg, 
                input = dem,
                coordinates = coord,
-               output = file.path(tempdir(), "out.tif"),
+               output = file.path(tempdir(), "out.tif"), 
                load_output = TRUE)
 
 # under Linux in combination with QGIS 3.4.10 you might not get an output (I
