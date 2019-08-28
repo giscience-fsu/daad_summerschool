@@ -157,7 +157,7 @@ multi.local.function(
     "plancurv.asc", "profcurv.asc",
     "distroad.asc", "distdeforest.asc"
   ),
-  out.varnames = "gampred", in.path = here("R/data"),
+  out.varnames = "gampred", path = here("R/data"),
   fun = grid.predict, control.predict = list(type = "response"),
   fit = fit, trafo = my.trafo, quiet = FALSE
 )
