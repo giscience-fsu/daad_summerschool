@@ -70,7 +70,7 @@ rsaga.geoprocessor("io_grid", "Import ESRI Arc/Info Grid",
 # Slope, aspect, plan and profile curvature:
 rsaga.slope.asp.curv(here("R/data/dem"),
   out.slope = here("R/data/slope"), out.cplan = here("R/data/plancurv"),
-  out.cprof = here("R/data/profcurv"), method = here("R/data/poly2zevenbergen"),
+  out.cprof = here("R/data/profcurv"), method = "poly2zevenbergen",
   env = env
 )
 ## SAGA versions older than 2.1.1 use this instead of rsaga.slope.asp.curv:
@@ -78,7 +78,7 @@ rsaga.slope.asp.curv(here("R/data/dem"),
 ##        out.hcurv = "plancurv", out.vcurv = "profcurv",
 ##        method = "poly2zevenbergen", env=env)
 # Create a hydrologically more meaningful DEM by filling any local sinks:
-rsaga.sink.removal("dem", out.dem = here("R/data/sdem"), method = "fill", env = env)
+rsaga.sink.removal(here("R/data/dem"), out.dem = here("R/data/sdem"), method = "fill", env = env)
 # Use the multiple flow direction algorithm to calculate catchment area and slope:
 rsaga.parallel.processing(here("R/data/sdem"),
   out.carea = here("R/data/carea"),
